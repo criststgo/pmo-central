@@ -454,6 +454,7 @@ function setSyncState(state, label) {
 // No requiere client_secret ni servidor. Funciona desde un HTML local.
 
 const ARAMARK_TENANT = 'b1519f0f-2dbf-4e21-bf34-a686ce97588a';
+const HARDCODED_CLIENT_ID = '4e6c79d4-515d-4af9-baa1-5181b7ad746f';
 let pkceVerifier = null;
 
 function generateRandom(len) {
@@ -477,11 +478,12 @@ async function loginMicrosoft() {
   pkceVerifier = generateRandom(64);
   const challenge = await sha256b64(pkceVerifier);
   sessionStorage.setItem('pkce_verifier', pkceVerifier);
-  sessionStorage.setItem('pkce_clientId', CFG.clientId);
+  const clientId = HARDCODED_CLIENT_ID || CFG.clientId;
+  sessionStorage.setItem('pkce_clientId', clientId);
 
   const tenant = CFG.tenantId || ARAMARK_TENANT;
   const params = new URLSearchParams({
-    client_id: CFG.clientId,
+    client_id: HARDCODED_CLIENT_ID || CFG.clientId,
     response_type: 'code',
     redirect_uri: REDIRECT,
     scope: 'https://graph.microsoft.com/Files.ReadWrite User.Read offline_access',
@@ -524,7 +526,7 @@ window.addEventListener('load', async () => {
 
 async function exchangeCodeForToken(code) {
   const verifier = sessionStorage.getItem('pkce_verifier');
-  const clientId = sessionStorage.getItem('pkce_clientId') || CFG.clientId;
+  const clientId = HARDCODED_CLIENT_ID || sessionStorage.getItem('pkce_clientId') || CFG.clientId;
   const tenant = CFG.tenantId || ARAMARK_TENANT;
   try {
     const res = await fetch(`https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`, {
